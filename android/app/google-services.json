@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "196085635144",
+    "project_id": "docnow-83995",
+    "storage_bucket": "docnow-83995.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:196085635144:android:b31bc536b19f662332a07d",
+        "android_client_info": {
+          "package_name": "com.example.firebaseetasks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA39BHYafAWl6Ace_M3J9vglKxvyDNrfuc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
