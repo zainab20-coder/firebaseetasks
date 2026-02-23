@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'firestore_bootstrap_service.dart';
-import 'doctors_list.dart';
+import 'home_screen.dart';
 import 'register_patient.dart';
 
 class LoginPatientPage extends StatefulWidget {
@@ -53,7 +53,7 @@ class _LoginPatientPageState extends State<LoginPatientPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const DoctorsPage()),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
       String message = 'حدث خطأ، حاول مرة أخرى';
