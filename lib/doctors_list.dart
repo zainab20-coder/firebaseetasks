@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'add_doctor_page.dart'; // تأكدي مسار الصفحة صحيح
 import 'doctor_details_page.dart';
 
 class DoctorsPage extends StatelessWidget {
@@ -13,20 +12,7 @@ class DoctorsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("قائمة الأطباء"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AddDoctorPage()),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text("قائمة الأطباء")),
       body: StreamBuilder<QuerySnapshot>(
         stream: getDoctors(),
         builder: (context, snapshot) {
