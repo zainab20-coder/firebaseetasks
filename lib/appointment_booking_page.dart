@@ -17,7 +17,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Appointment")),
+      appBar: AppBar(title: const Text("حجز موعد")),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('doctors')
@@ -31,6 +31,9 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
           }
 
           var slots = snapshot.data!.docs;
+          if (slots.isEmpty) {
+            return const Center(child: Text('لا توجد مواعيد متاحة حاليًا'));
+          }
 
           return Column(
             children: [
@@ -40,7 +43,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                   itemBuilder: (context, index) {
                     var slot = slots[index];
                     return ListTile(
-                      title: Text("Time: ${slot['time']}"),
+                      title: Text("الوقت: ${slot['time']}"),
                       trailing: Radio<String>(
                         value: slot.id,
                         groupValue: selectedSlot,
@@ -62,11 +65,11 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                       await FirebaseFirestore.instance
                           .collection('appointments')
                           .add({
-                        'doctorId': widget.doctorId,
-                        'patientId': user.uid,
-                        'slotId': selectedSlot,
-                        'status': 'upcoming',
-                      });
+                            'doctorId': widget.doctorId,
+                            'patientId': user.uid,
+                            'slotId': selectedSlot,
+                            'status': 'upcoming',
+                          });
 
                       await FirebaseFirestore.instance
                           .collection('doctors')
@@ -76,14 +79,18 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                           .update({'isBooked': true});
 
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Appointment booked successfully!")),
+                        const SnackBar(content: Text("تم حجز الموعد بنجاح")),
                       );
 
                       Navigator.pop(context);
                     }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("يرجى اختيار موعد أولاً")),
+                    );
                   }
                 },
-                child: const Text("Confirm Booking"),
+                child: const Text("تأكيد الحجز"),
               ),
             ],
           );

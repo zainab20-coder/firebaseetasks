@@ -22,12 +22,12 @@ class _BookingPageState extends State<BookingPage> {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Appointment booked ✅")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("تم حجز الموعد بنجاح")));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Select doctor and date")),
+        const SnackBar(content: Text("يرجى اختيار الطبيب والتاريخ")),
       );
     }
   }
@@ -35,24 +35,28 @@ class _BookingPageState extends State<BookingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Appointment")),
+      appBar: AppBar(title: const Text("حجز موعد")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
             // قائمة الدكاترة
             StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('doctors').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('doctors')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return const CircularProgressIndicator();
                 var doctors = snapshot.data!.docs;
                 return DropdownButtonFormField<String>(
                   value: selectedDoctorId,
-                  hint: const Text("Select Doctor"),
+                  hint: const Text("اختر الطبيب"),
                   items: doctors.map((doctor) {
                     return DropdownMenuItem<String>(
                       value: doctor.id,
-                      child: Text(doctor['name'] + " (" + doctor['specialization'] + ")"),
+                      child: Text(
+                        "${doctor['name']} (${doctor['specialization']})",
+                      ),
                     );
                   }).toList(),
                   onChanged: (value) {
@@ -80,16 +84,20 @@ class _BookingPageState extends State<BookingPage> {
                   });
                 }
               },
-              child: Text(selectedDate == null
-                  ? "Select Date"
-                  : "Selected: ${selectedDate!.toLocal()}".split(' ')[0]),
+              child: Text(
+                selectedDate == null
+                    ? "اختر التاريخ"
+                    : "التاريخ المختار: ${selectedDate!.toLocal()}".split(
+                        ' ',
+                      )[0],
+              ),
             ),
             const SizedBox(height: 30),
 
             // زر حجز
             ElevatedButton(
               onPressed: addAppointment,
-              child: const Text("Book Appointment"),
+              child: const Text("تأكيد الحجز"),
             ),
           ],
         ),

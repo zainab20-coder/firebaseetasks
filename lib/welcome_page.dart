@@ -7,112 +7,104 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 30),
-
-              // أيقونة أو صورة
-              const Icon(Icons.info_outline, size: 40, color: Colors.blue),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "DocNow",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-
-              const SizedBox(height: 20),
-
-              // أيقونة الطبيب
-              const Icon(Icons.medical_services_outlined,
-                  size: 100, color: Colors.orange),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                "أهلاً بك في DocNow",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "احجز المواعيد",
-                style: TextStyle(fontSize: 16),
-              ),
-
-              const SizedBox(height: 40),
-
-              // زر المريض
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPatientPage()),
-                    );
-                  },
-                  child: const Text(
-                    "أنا مريض\nإدارة المواعيد",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              colors.primary.withValues(alpha: 0.92),
+              colors.secondary.withValues(alpha: 0.9),
+            ],
+            begin: Alignment.topRight,
+            end: Alignment.bottomLeft,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                const Icon(
+                  Icons.local_hospital_rounded,
+                  size: 70,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'DocNow',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 34,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 15),
-
-              // زر الطبيب
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green.shade700,
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginDoctorPage()),
-                    );
-                  },
-                  child: const Text(
-                    "أنا طبيب\nإدارة المواعيد",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-              ),
-
-              const Spacer(),
-
-              // رابط تسجيل الدخول
-              GestureDetector(
-                onTap: () {
-                  // هنا ممكن توديه لصفحة اختيار تسجيل الدخول
-                },
-                child: const Text(
-                  "لديك سجل دخول",
+                const SizedBox(height: 8),
+                const Text(
+                  'مرحبًا بك في تطبيق حجز المواعيد الطبية',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
-                    decoration: TextDecoration.underline,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-
-            
-            ],
+                const Spacer(),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'اختر نوع الحساب للمتابعة',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginPatientPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.person_outline),
+                          label: const Text('أنا مريض'),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.secondary,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginDoctorPage(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.medical_services_outlined),
+                          label: const Text('أنا طبيب'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+              ],
+            ),
           ),
         ),
       ),

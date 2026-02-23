@@ -17,89 +17,100 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('الرئيسية')),
       body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon doctor (بديل الصورة)
-              Icon(
-                Icons.medical_services_outlined,
-                size: 100,
-                color: Colors.blueAccent,
-              ),
-
-              const SizedBox(height: 24),
-
-              // Welcome Text
-              const Text(
-                'Welcome to DocNow',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 40),
-
-              // My Appointment Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/appointments');
-                  },
-                  child: const Text('My Appointment'),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.medical_services_outlined, size: 42),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'مرحبًا بك في DocNow\nاختر طبيبًا لحجز موعدك القادم',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: getDoctors(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/appointments');
+              },
+              icon: const Icon(Icons.calendar_month_outlined),
+              label: const Text('مواعيدي'),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'الأطباء المتاحون',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: getDoctors(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                    if (snapshot.hasError) {
-                      return const Center(
-                        child: Text("Error loading doctors ❌"),
-                      );
-                    }
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text("حدث خطأ أثناء تحميل الأطباء"),
+                    );
+                  }
 
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(child: Text("No doctors found 🩺"));
-                    }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(child: Text("لا يوجد أطباء حاليًا"));
+                  }
 
-                    final doctors = snapshot.data!.docs;
+                  final doctors = snapshot.data!.docs;
 
-                    return ListView.builder(
-                      itemCount: doctors.length,
-                      itemBuilder: (context, index) {
-                        var doctor = doctors[index];
-                        return InkWell(
-                          onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => DoctorDetailsPage(doctorId: doctor.id)));
-                          },
-                          child: Card(
-                            margin: const EdgeInsets.all(10),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.person,
-                                color: Colors.blue,
-                              ),
-                              title: Text(doctor['name']),
-                              subtitle: Text(
-                                "Specialization: ${doctor['specialization']}",
-                              ),
+                  return ListView.builder(
+                    itemCount: doctors.length,
+                    itemBuilder: (context, index) {
+                      final doctor = doctors[index];
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DoctorDetailsPage(doctorId: doctor.id),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.person,
+                              color: Colors.blue,
+                            ),
+                            title: Text(doctor['name']),
+                            subtitle: Text(
+                              "التخصص: ${doctor['specialization']}",
                             ),
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

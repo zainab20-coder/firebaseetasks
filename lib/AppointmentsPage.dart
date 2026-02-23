@@ -16,7 +16,7 @@ class AppointmentsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("My Appointments")),
+      appBar: AppBar(title: const Text("مواعيدي")),
       body: StreamBuilder<QuerySnapshot>(
         stream: getAppointments(),
         builder: (context, snapshot) {
@@ -24,12 +24,12 @@ class AppointmentsPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text("Error loading appointments ❌"));
+            return const Center(child: Text("حدث خطأ أثناء تحميل المواعيد"));
           }
 
           final appointments = snapshot.data!.docs;
           if (appointments.isEmpty) {
-            return const Center(child: Text("No appointments 🩺"));
+            return const Center(child: Text("لا توجد مواعيد"));
           }
 
           return ListView.builder(
@@ -46,7 +46,9 @@ class AppointmentsPage extends StatelessWidget {
                     .get(),
                 builder: (context, docSnapshot) {
                   if (!docSnapshot.hasData) {
-                    return const ListTile(title: Text("Loading patient..."));
+                    return const ListTile(
+                      title: Text("جاري تحميل بيانات المريض..."),
+                    );
                   }
 
                   var patient = docSnapshot.data!;
@@ -56,7 +58,7 @@ class AppointmentsPage extends StatelessWidget {
                       leading: const Icon(Icons.person, color: Colors.green),
                       title: Text(patient['name']),
                       subtitle: Text(
-                        "Phone: ${patient['phone']}\nDate: ${date.toLocal()}"
+                        "الهاتف: ${patient['phone']}\nالتاريخ: ${date.toLocal()}"
                             .split(' ')[0],
                       ),
                     ),

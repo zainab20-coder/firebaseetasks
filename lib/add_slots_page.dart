@@ -9,10 +9,7 @@ class AddSlotsPage extends StatelessWidget {
     TextEditingController timeController = TextEditingController();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Add Available Slots"),
-        backgroundColor: Colors.blueGrey,
-      ),
+      appBar: AppBar(title: const Text("إضافة مواعيد متاحة")),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -20,27 +17,30 @@ class AddSlotsPage extends StatelessWidget {
             TextField(
               controller: dateController,
               decoration: InputDecoration(
-                labelText: "Date",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                labelText: "التاريخ",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             const SizedBox(height: 15),
             TextField(
               controller: timeController,
               decoration: InputDecoration(
-                labelText: "Time",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                labelText: "الوقت",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
             const SizedBox(height: 25),
             ElevatedButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Slot Added Successfully")),
+                  const SnackBar(content: Text("تمت إضافة الموعد بنجاح")),
                 );
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blueGrey),
-              child: const Text("Add Slot"),
+              child: const Text("إضافة موعد"),
             ),
           ],
         ),

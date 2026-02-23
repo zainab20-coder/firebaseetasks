@@ -13,7 +13,7 @@ class DoctorsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Doctors List"),
+        title: const Text("قائمة الأطباء"),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -23,7 +23,7 @@ class DoctorsPage extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => AddDoctorPage()),
               );
             },
-          )
+          ),
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -34,11 +34,11 @@ class DoctorsPage extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return const Center(child: Text("Error loading doctors ❌"));
+            return const Center(child: Text("حدث خطأ أثناء تحميل الأطباء"));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text("No doctors found 🩺"));
+            return const Center(child: Text("لا يوجد أطباء حاليًا"));
           }
 
           final doctors = snapshot.data!.docs;
@@ -52,7 +52,7 @@ class DoctorsPage extends StatelessWidget {
                 child: ListTile(
                   leading: const Icon(Icons.person, color: Colors.blue),
                   title: Text(doctor['name']),
-                  subtitle: Text("Specialization: ${doctor['specialization']}"),
+                  subtitle: Text("التخصص: ${doctor['specialization']}"),
                 ),
               );
             },
