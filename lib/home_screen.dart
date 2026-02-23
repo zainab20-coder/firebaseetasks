@@ -10,8 +10,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Stream<QuerySnapshot> getDoctors() {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getDoctors() {
     return FirebaseFirestore.instance.collection('doctors').snapshots();
+  }
+
+  String _normalize(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('أ', 'ا')
+        .replaceAll('إ', 'ا')
+        .replaceAll('آ', 'ا')
+        .replaceAll('ة', 'ه')
+        .replaceAll(RegExp(r'\s+'), ' ');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,8 +77,32 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
+            TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = _normalize(value);
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'ابحث عن طبيب أو اختصاص',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                        icon: const Icon(Icons.close),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                 stream: getDoctors(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -67,28 +111,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   if (snapshot.hasError) {
                     return const Center(
-                      child: Text("حدث خطأ أثناء تحميل الأطباء"),
+                      child: Text('حدث خطأ أثناء تحميل الأطباء'),
                     );
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text("لا يوجد أطباء حاليًا"));
+                    return const Center(child: Text('لا يوجد أطباء حاليًا'));
                   }
 
-                  final doctors = snapshot.data!.docs.where((doc) {
+                  final List<QueryDocumentSnapshot<Map<String, dynamic>>>
+                  doctors = snapshot.data!.docs.where((doc) {
                     if (doc.id == '__schema__') return false;
-                    final data = doc.data() as Map<String, dynamic>;
+                    final Map<String, dynamic> data = doc.data();
                     return data['hidden'] != true;
                   }).toList();
 
                   if (doctors.isEmpty) {
-                    return const Center(child: Text("لا يوجد أطباء حاليًا"));
+                    return const Center(child: Text('لا يوجد أطباء حاليًا'));
+                  }
+
+                  final List<QueryDocumentSnapshot<Map<String, dynamic>>>
+                  filteredDoctors = doctors.where((doctor) {
+                    final Map<String, dynamic> data = doctor.data();
+                    final String doctorName = (data['name'] ?? '').toString();
+                    final String specialization = (data['specialization'] ?? '')
+                        .toString();
+
+                    if (_searchQuery.isEmpty) {
+                      return true;
+                    }
+
+                    return _normalize(doctorName).contains(_searchQuery) ||
+                        _normalize(specialization).contains(_searchQuery);
+                  }).toList();
+
+                  if (filteredDoctors.isEmpty) {
+                    return const Center(
+                      child: Text('لا يوجد أطباء مطابقون للبحث'),
+                    );
                   }
 
                   return ListView.builder(
-                    itemCount: doctors.length,
+                    itemCount: filteredDoctors.length,
                     itemBuilder: (context, index) {
-                      final doctor = doctors[index];
+                      final QueryDocumentSnapshot<Map<String, dynamic>> doctor =
+                          filteredDoctors[index];
+                      final Map<String, dynamic> data = doctor.data();
+                      final String doctorName = (data['name'] ?? 'طبيب')
+                          .toString();
+                      final String specialization =
+                          (data['specialization'] ?? 'غير محدد').toString();
+
                       return InkWell(
                         borderRadius: BorderRadius.circular(16),
                         onTap: () {
@@ -106,10 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icons.person,
                               color: Colors.blue,
                             ),
-                            title: Text(doctor['name']),
-                            subtitle: Text(
-                              "التخصص: ${doctor['specialization']}",
-                            ),
+                            title: Text(doctorName),
+                            subtitle: Text('التخصص: $specialization'),
                           ),
                         ),
                       );
