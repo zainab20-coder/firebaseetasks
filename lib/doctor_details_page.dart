@@ -30,6 +30,10 @@ class DoctorDetailsPage extends StatelessWidget {
           if (data == null) {
             return const Center(child: Text("بيانات الطبيب غير متاحة"));
           }
+          final String workingHoursStart =
+              (data['workingHoursStart'] ?? '09:00').toString();
+          final String workingHoursEnd = (data['workingHoursEnd'] ?? '17:00')
+              .toString();
 
           return Padding(
             padding: const EdgeInsets.all(20),
@@ -47,6 +51,11 @@ class DoctorDetailsPage extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   "التخصص: ${data['specialization'] ?? 'غير متاح'}",
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "ساعات العمل: $workingHoursStart - $workingHoursEnd",
                   style: const TextStyle(fontSize: 18),
                 ),
                 if ((data['experience'] ?? '').toString().isNotEmpty) ...[

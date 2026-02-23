@@ -40,7 +40,7 @@ class _RegisterDoctorPageState extends State<RegisterDoctorPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => AddDoctorPage()),
+        MaterialPageRoute(builder: (context) => const AddDoctorPage()),
       );
     } on FirebaseAuthException catch (e) {
       String message = 'حدث خطأ أثناء التسجيل';

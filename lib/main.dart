@@ -107,9 +107,7 @@ class MyApp extends StatelessWidget {
         '/register_doctor': (context) => const RegisterDoctorPage(),
         '/home': (context) => const HomeScreen(), // للمريض
         '/doctor_dashboard': (context) => const DoctorDashboard(), // للطبيب
-        '/appointments': (context) => const AppointmentsPage(
-          patientId: 'GQrwiHFpBFb3vD2o8uRj',
-        ), // صفحة المواعيد
+        '/appointments': (context) => const AppointmentsPage(), // صفحة المواعيد
       },
     );
   }

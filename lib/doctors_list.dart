@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'add_doctor_page.dart'; // تأكدي مسار الصفحة صحيح
+import 'doctor_details_page.dart';
 
 class DoctorsPage extends StatelessWidget {
   const DoctorsPage({super.key});
@@ -20,7 +21,7 @@ class DoctorsPage extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddDoctorPage()),
+                MaterialPageRoute(builder: (context) => const AddDoctorPage()),
               );
             },
           ),
@@ -50,9 +51,19 @@ class DoctorsPage extends StatelessWidget {
               return Card(
                 margin: const EdgeInsets.all(10),
                 child: ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            DoctorDetailsPage(doctorId: doctor.id),
+                      ),
+                    );
+                  },
                   leading: const Icon(Icons.person, color: Colors.blue),
                   title: Text(doctor['name']),
                   subtitle: Text("التخصص: ${doctor['specialization']}"),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 ),
               );
             },
