@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'login_doctor.dart';
 import 'login_patient.dart';
 import 'register_patient.dart';
 
@@ -52,12 +51,7 @@ class LoginPage extends StatelessWidget {
                     const SizedBox(height: 10),
                     ElevatedButton.icon(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginDoctorPage(),
-                          ),
-                        );
+                        Navigator.pushNamed(context, '/login_doctor');
                       },
                       icon: const Icon(Icons.medical_services_outlined),
                       label: const Text('الدخول كطبيب'),

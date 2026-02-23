@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'firestore_bootstrap_service.dart';
 import 'doctors_list.dart';
 import 'register_patient.dart';
 
@@ -38,6 +39,17 @@ class _LoginPatientPageState extends State<LoginPatientPage> {
         password: _passwordController.text.trim(),
       );
 
+      final User user = _auth.currentUser!;
+      try {
+        await FirestoreBootstrapService.restoreBaseCollections(
+          uid: user.uid,
+          email: user.email ?? _emailController.text.trim(),
+          isDoctor: false,
+        );
+      } catch (_) {
+        // لا نمنع دخول المريض إذا فشلت إعادة التهيئة.
+      }
+
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -57,6 +69,11 @@ class _LoginPatientPageState extends State<LoginPatientPage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('حدث خطأ غير متوقع: $e')));
     } finally {
       if (mounted) {
         setState(() {

@@ -12,6 +12,7 @@ import 'register_patient.dart';
 import 'register_doctor.dart';
 import 'doctor_dashboard.dart';
 import 'home_screen.dart'; // صفحة المريض
+import 'login_doctor.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,6 +104,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/welcome': (context) => const WelcomePage(),
         '/login': (context) => const LoginPage(),
+        '/login_doctor': (context) => const LoginDoctorPage(),
         '/register_patient': (context) => const RegisterPatientPage(),
         '/register_doctor': (context) => const RegisterDoctorPage(),
         '/home': (context) => const HomeScreen(), // للمريض

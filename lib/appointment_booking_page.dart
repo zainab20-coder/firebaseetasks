@@ -15,6 +15,7 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
   DateTime _selectedDate = DateTime.now();
   String? _selectedTime;
   bool _isBooking = false;
+  bool _showOnlyAvailable = true;
 
   String _dateKey(DateTime date) {
     final DateTime normalized = DateTime(date.year, date.month, date.day);
@@ -27,6 +28,29 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     final String month = date.month.toString().padLeft(2, '0');
     final String day = date.day.toString().padLeft(2, '0');
     return '${date.year}/$month/$day';
+  }
+
+  String _weekdayLabel(DateTime date) {
+    switch (date.weekday) {
+      case DateTime.monday:
+        return 'الاثنين';
+      case DateTime.tuesday:
+        return 'الثلاثاء';
+      case DateTime.wednesday:
+        return 'الأربعاء';
+      case DateTime.thursday:
+        return 'الخميس';
+      case DateTime.friday:
+        return 'الجمعة';
+      case DateTime.saturday:
+        return 'السبت';
+      default:
+        return 'الأحد';
+    }
+  }
+
+  bool _isSameDate(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
   int _toMinutes(String hhmm) {
@@ -95,6 +119,54 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     return 30;
   }
 
+  Future<Map<String, String>> _resolvePatientProfile(User user) async {
+    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+    final String uid = user.uid;
+    final DocumentReference<Map<String, dynamic>> patientRef = firestore
+        .collection('patients')
+        .doc(uid);
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await patientRef
+        .get();
+
+    if (snapshot.exists) {
+      final Map<String, dynamic> data = snapshot.data() ?? {};
+      return {
+        'id': uid,
+        'name': (data['name'] ?? 'مريض').toString(),
+        'phone': (data['phone'] ?? 'غير متوفر').toString(),
+      };
+    }
+
+    final String fallbackName = (user.email ?? 'مريض').split('@').first;
+    await patientRef.set({
+      'uid': uid,
+      'name': fallbackName,
+      'email': user.email ?? '',
+      'phone': 'غير متوفر',
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return {'id': uid, 'name': fallbackName, 'phone': 'غير متوفر'};
+  }
+
+  Future<void> _pickOtherDate() async {
+    final DateTime today = DateTime.now();
+    final DateTime todayDateOnly = DateTime(today.year, today.month, today.day);
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: todayDateOnly,
+      lastDate: todayDateOnly.add(const Duration(days: 90)),
+      helpText: 'اختر تاريخ الحجز',
+    );
+
+    if (picked == null) return;
+    setState(() {
+      _selectedDate = picked;
+      _selectedTime = null;
+    });
+  }
+
   Future<void> _bookAppointment({
     required String workingHoursStart,
     required String workingHoursEnd,
@@ -134,6 +206,24 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     setState(() {
       _isBooking = true;
     });
+
+    Map<String, String> patientProfile;
+    try {
+      patientProfile = await _resolvePatientProfile(user);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isBooking = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر تحميل بيانات المريض')));
+      return;
+    }
+
+    final String patientId = patientProfile['id'] ?? user.uid;
+    final String patientName = patientProfile['name'] ?? 'مريض';
+    final String patientPhone = patientProfile['phone'] ?? 'غير متوفر';
 
     final String dateKey = _dateKey(normalizedDate);
     final String appointmentId =
@@ -181,7 +271,9 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
 
         transaction.set(appointmentRef, {
           'doctorId': widget.doctorId,
-          'patientId': user.uid,
+          'patientId': patientId,
+          'patientName': patientName,
+          'patientPhone': patientPhone,
           'date': Timestamp.fromDate(appointmentDateTime),
           'dateKey': dateKey,
           'time': _selectedTime,
@@ -220,34 +312,15 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
     }
   }
 
-  Widget _buildLegendItem({
-    required Color color,
-    required String label,
-    bool outlined = false,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(
-            color: outlined ? Colors.transparent : color,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: color),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final DateTime today = DateTime.now();
     final DateTime todayDateOnly = DateTime(today.year, today.month, today.day);
     final String selectedDateKey = _dateKey(_selectedDate);
+    final List<DateTime> quickDates = List<DateTime>.generate(
+      7,
+      (index) => todayDateOnly.add(Duration(days: index)),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('حجز موعد')),
@@ -285,8 +358,6 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
             );
           }
 
-          final bool hasSelection = _selectedTime != null;
-
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -310,45 +381,74 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                           'ساعات العمل: $workingHoursStart - $workingHoursEnd',
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        const SizedBox(height: 10),
-                        CalendarDatePicker(
-                          initialDate: _selectedDate,
-                          firstDate: todayDateOnly,
-                          lastDate: todayDateOnly.add(const Duration(days: 90)),
-                          onDateChanged: (DateTime newDate) {
-                            setState(() {
-                              _selectedDate = newDate;
-                              _selectedTime = null;
-                            });
-                          },
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 42,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: quickDates.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, index) {
+                              final DateTime date = quickDates[index];
+                              final bool selected = _isSameDate(
+                                date,
+                                _selectedDate,
+                              );
+                              return ChoiceChip(
+                                selected: selected,
+                                label: Text(
+                                  '${_weekdayLabel(date)}\n${date.day}/${date.month}',
+                                  textAlign: TextAlign.center,
+                                ),
+                                labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                onSelected: (_) {
+                                  setState(() {
+                                    _selectedDate = date;
+                                    _selectedTime = null;
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: _pickOtherDate,
+                            icon: const Icon(Icons.calendar_today_outlined),
+                            label: const Text('اختيار تاريخ آخر'),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  'اختر وقت الحجز ليوم ${_formatDate(_selectedDate)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 8,
+                Row(
                   children: [
-                    _buildLegendItem(
-                      color: Theme.of(context).colorScheme.primary,
-                      label: 'محدد',
+                    Expanded(
+                      child: Text(
+                        'أوقات ${_formatDate(_selectedDate)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    _buildLegendItem(
-                      color: Colors.green,
-                      label: 'متاح',
-                      outlined: true,
+                    FilterChip(
+                      label: const Text('المتاحة فقط'),
+                      selected: _showOnlyAvailable,
+                      onSelected: (value) {
+                        setState(() {
+                          _showOnlyAvailable = value;
+                        });
+                      },
                     ),
-                    _buildLegendItem(color: Colors.grey, label: 'غير متاح'),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -371,47 +471,109 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                           .where((time) => time.isNotEmpty)
                           .toSet();
 
-                      return GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 8,
-                              crossAxisSpacing: 8,
-                              childAspectRatio: 2.2,
-                            ),
-                        itemCount: slots.length,
+                      final List<String> visibleSlots = slots.where((slot) {
+                        if (!_showOnlyAvailable) return true;
+                        final bool isBooked = bookedTimes.contains(slot);
+                        final bool isPast = _isPastSlot(_selectedDate, slot);
+                        return !isBooked && !isPast;
+                      }).toList();
+
+                      if (visibleSlots.isEmpty) {
+                        return const Center(
+                          child: Text('لا توجد أوقات متاحة في هذا اليوم'),
+                        );
+                      }
+
+                      return ListView.separated(
+                        itemCount: visibleSlots.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
-                          final String slot = slots[index];
+                          final String slot = visibleSlots[index];
                           final bool isBooked = bookedTimes.contains(slot);
                           final bool isPast = _isPastSlot(_selectedDate, slot);
                           final bool isUnavailable = isBooked || isPast;
                           final bool isSelected = _selectedTime == slot;
 
-                          return ChoiceChip(
-                            label: Text(slot),
-                            selected: isSelected,
-                            selectedColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            onSelected: isUnavailable
+                          final ColorScheme colors = Theme.of(
+                            context,
+                          ).colorScheme;
+                          final Color borderColor = isSelected
+                              ? colors.primary
+                              : isUnavailable
+                              ? Colors.grey.shade300
+                              : colors.outlineVariant;
+                          final Color tileColor = isSelected
+                              ? colors.primary.withValues(alpha: 0.12)
+                              : Colors.white;
+                          final String statusText = isBooked
+                              ? 'محجوز'
+                              : isPast
+                              ? 'انتهى'
+                              : 'متاح';
+                          final IconData statusIcon = isBooked
+                              ? Icons.block_outlined
+                              : isPast
+                              ? Icons.history_toggle_off
+                              : isSelected
+                              ? Icons.check_circle
+                              : Icons.schedule;
+
+                          return InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: isUnavailable
                                 ? null
-                                : (_) {
+                                : () {
                                     setState(() {
                                       _selectedTime = slot;
                                     });
                                   },
-                            labelStyle: TextStyle(
-                              color: isUnavailable
-                                  ? Colors.grey
-                                  : isSelected
-                                  ? Colors.white
-                                  : Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            side: BorderSide(
-                              color: isUnavailable
-                                  ? Colors.grey.shade400
-                                  : Theme.of(context).colorScheme.primary,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: tileColor,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: borderColor),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    statusIcon,
+                                    color: isUnavailable
+                                        ? Colors.grey
+                                        : isSelected
+                                        ? colors.primary
+                                        : colors.secondary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      slot,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: isUnavailable
+                                            ? Colors.grey
+                                            : colors.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    statusText,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: isUnavailable
+                                          ? Colors.grey
+                                          : isSelected
+                                          ? colors.primary
+                                          : colors.secondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         },
@@ -419,30 +581,34 @@ class _AppointmentBookingPageState extends State<AppointmentBookingPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  hasSelection
-                      ? 'الوقت المحدد: $_selectedTime'
-                      : 'لم يتم اختيار وقت بعد',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: hasSelection
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
+                const SizedBox(height: 10),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: Text(
+                    _selectedTime == null
+                        ? 'اختر وقتًا مناسبًا للمتابعة'
+                        : 'الوقت المحدد: $_selectedTime',
+                    key: ValueKey<String>(_selectedTime ?? 'empty'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _selectedTime == null
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 _isBooking
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton.icon(
-                        onPressed: hasSelection
-                            ? () => _bookAppointment(
+                        onPressed: _selectedTime == null
+                            ? null
+                            : () => _bookAppointment(
                                 workingHoursStart: workingHoursStart,
                                 workingHoursEnd: workingHoursEnd,
                                 slotDurationMinutes: slotDurationMinutes,
-                              )
-                            : null,
+                              ),
                         icon: const Icon(Icons.check_circle_outline),
                         label: const Text('تأكيد الحجز'),
                       ),

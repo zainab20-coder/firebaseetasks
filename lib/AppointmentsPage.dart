@@ -10,7 +10,6 @@ class AppointmentsPage extends StatelessWidget {
     return FirebaseFirestore.instance
         .collection('appointments')
         .where('patientId', isEqualTo: uid)
-        .orderBy('date')
         .snapshots();
   }
 
@@ -45,9 +44,17 @@ class AppointmentsPage extends StatelessWidget {
             return const Center(child: Text("حدث خطأ أثناء تحميل المواعيد"));
           }
 
-          final appointments = snapshot.data!.docs;
+          final appointments = [...snapshot.data!.docs]
+            ..sort((a, b) {
+              final Timestamp? aTs = a.data()['date'] as Timestamp?;
+              final Timestamp? bTs = b.data()['date'] as Timestamp?;
+              final DateTime aDate = aTs?.toDate() ?? DateTime(1970);
+              final DateTime bDate = bTs?.toDate() ?? DateTime(1970);
+              return aDate.compareTo(bDate);
+            });
+
           if (appointments.isEmpty) {
-            return const Center(child: Text("لا توجد مواعيد"));
+            return const Center(child: Text("لا يوجد"));
           }
 
           return ListView.builder(

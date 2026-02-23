@@ -75,7 +75,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     return const Center(child: Text("لا يوجد أطباء حاليًا"));
                   }
 
-                  final doctors = snapshot.data!.docs;
+                  final doctors = snapshot.data!.docs.where((doc) {
+                    if (doc.id == '__schema__') return false;
+                    final data = doc.data() as Map<String, dynamic>;
+                    return data['hidden'] != true;
+                  }).toList();
+
+                  if (doctors.isEmpty) {
+                    return const Center(child: Text("لا يوجد أطباء حاليًا"));
+                  }
 
                   return ListView.builder(
                     itemCount: doctors.length,

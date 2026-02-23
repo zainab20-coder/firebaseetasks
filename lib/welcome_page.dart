@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'login_patient.dart';
-import 'login_doctor.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -88,12 +87,7 @@ class WelcomePage extends StatelessWidget {
                             foregroundColor: Colors.white,
                           ),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginDoctorPage(),
-                              ),
-                            );
+                            Navigator.pushNamed(context, '/login_doctor');
                           },
                           icon: const Icon(Icons.medical_services_outlined),
                           label: const Text('أنا طبيب'),
